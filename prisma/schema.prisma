@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum LogLevel {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+enum Environment {
+  development
+  staging
+  production
+}
+
+enum IncidentStatus {
+  OPEN
+  RESOLVED
+}
+
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  projects     Project[]
+}
+
+model Project {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  apiKeys     ApiKey[]
+  logs        Log[]
+  incidents   Incident[]
+
+  @@index([ownerId])
+}
+
+model ApiKey {
+  id        String       @id @default(uuid())
+  projectId String
+  keyHash   String       @unique
+  status    ApiKeyStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  revokedAt DateTime?
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model Log {
+  id          String       @id @default(uuid())
+  projectId   String
+  incidentId  String?
+  level       LogLevel
+  message     String
+  source      String?
+  environment Environment?
+  metadata    Json?
+  errorCode   String?
+  createdAt   DateTime     @default(now())
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  incident    Incident?    @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt])
+  @@index([projectId, level])
+  @@index([projectId, source])
+  @@index([projectId, environment])
+  @@index([incidentId])
+}
+
+model Incident {
+  id                String         @id @default(uuid())
+  projectId         String
+  fingerprint       String
+  status            IncidentStatus @default(OPEN)
+  severity          LogLevel
+  firstOccurrenceAt DateTime
+  lastOccurrenceAt  DateTime
+  occurrenceCount   Int            @default(1)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  project           Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  logs              Log[]
+
+  @@index([projectId, status])
+  @@index([projectId, fingerprint, status])
+  @@index([lastOccurrenceAt])
+}

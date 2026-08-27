@@ -1,6 +1,11 @@
 import type { Express } from "express";
 import swaggerUi from "swagger-ui-express";
 
+const serverUrl =
+  process.env.NODE_ENV === "production"
+    ? "https://log-api-nchy.onrender.com/api/v1"
+    : "http://localhost:3000/api/v1";
+
 const openApiDocument = {
   openapi: "3.0.0",
   info: {
@@ -8,7 +13,11 @@ const openApiDocument = {
     version: "2.0.0",
     description: "API REST local para centralizar logs e incidentes de proyectos freelance."
   },
-  servers: [{ url: "http://localhost:3000/api/v1" }],
+  servers: [
+  {
+    url: serverUrl,
+  },
+],
   components: {
     securitySchemes: {
       bearerAuth: {

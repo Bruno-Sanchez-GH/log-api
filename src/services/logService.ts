@@ -10,6 +10,7 @@ export const ingestLog = async (input: {
   message: string;
   source?: string;
   environment?: Environment;
+  version?: string;
   metadata?: Prisma.InputJsonValue;
   errorCode?: string;
 }) => {
@@ -20,6 +21,7 @@ export const ingestLog = async (input: {
       message: input.message,
       source: input.source,
       environment: input.environment,
+      version: input.version,
       metadata: input.metadata,
       errorCode: input.errorCode
     }
@@ -32,12 +34,14 @@ export const ingestLog = async (input: {
   const incident = await attachLogToIncident({
     logId: log.id,
     projectId: input.projectId,
-    level: input.level,
-    message: input.message,
-    source: input.source,
-    errorCode: input.errorCode,
-    occurredAt: log.createdAt
-  });
+      level: input.level,
+      message: input.message,
+      source: input.source,
+      environment: input.environment,
+      version: input.version,
+      errorCode: input.errorCode,
+      occurredAt: log.createdAt
+    });
 
   return {
     ...log,

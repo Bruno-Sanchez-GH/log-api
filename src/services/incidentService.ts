@@ -27,6 +27,8 @@ export const attachLogToIncident = async (input: {
   level: LogLevel;
   message: string;
   source?: string | null;
+  environment?: string | null;
+  version?: string | null;
   errorCode?: string | null;
   occurredAt: Date;
 }) => {
@@ -128,10 +130,7 @@ export const listIncidents = async (
   ]);
 
   return {
-    items: items.map((incident) => ({
-      ...incident,
-      durationMs: incident.lastOccurrenceAt.getTime() - incident.firstOccurrenceAt.getTime()
-    })),
+    items: items.map(serializeIncident),
     pagination: {
       page: filters.page,
       pageSize: filters.pageSize,
@@ -160,17 +159,23 @@ export const getIncident = async (ownerId: string, incidentId: string) => {
     throw new AppError(403, "You cannot access this incident");
   }
 
-  return {
-    ...incident,
-    durationMs: incident.lastOccurrenceAt.getTime() - incident.firstOccurrenceAt.getTime()
-  };
+  return serializeIncident(incident);
 };
 
 export const resolveIncident = async (ownerId: string, incidentId: string) => {
   await getIncident(ownerId, incidentId);
 
-  return prisma.incident.update({
+  const incident = await prisma.incident.update({
     where: { id: incidentId },
     data: { status: IncidentStatus.RESOLVED }
   });
+
+  return serializeIncident(incident);
 };
+
+const serializeIncident = <T extends { firstOccurrenceAt: Date; lastOccurrenceAt: Date }>(incident: T) => ({
+  ...incident,
+  firstSeen: incident.firstOccurrenceAt,
+  lastSeen: incident.lastOccurrenceAt,
+  durationMs: incident.lastOccurrenceAt.getTime() - incident.firstOccurrenceAt.getTime()
+});

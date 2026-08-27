@@ -5,7 +5,7 @@ const openApiDocument = {
   openapi: "3.0.0",
   info: {
     title: "Freelance Log API",
-    version: "1.0.0",
+    version: "2.0.0",
     description: "API REST local para centralizar logs e incidentes de proyectos freelance."
   },
   servers: [{ url: "http://localhost:3000/api/v1" }],
@@ -56,12 +56,29 @@ const openApiDocument = {
           message: { type: "string", example: "User 15 not found" },
           source: { type: "string", example: "users-api" },
           environment: { type: "string", enum: ["development", "staging", "production"] },
+          version: { type: "string", example: "1.4.3" },
           errorCode: { type: "string", example: "USER_NOT_FOUND" },
           metadata: {
             type: "object",
             additionalProperties: true,
             example: { endpoint: "/users/15", method: "GET", statusCode: 404 }
           }
+        }
+      },
+      IncidentOutput: {
+        type: "object",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          projectId: { type: "string", format: "uuid" },
+          fingerprint: { type: "string" },
+          status: { type: "string", enum: ["OPEN", "RESOLVED"] },
+          severity: { type: "string", enum: ["ERROR", "CRITICAL"] },
+          firstOccurrenceAt: { type: "string", format: "date-time" },
+          lastOccurrenceAt: { type: "string", format: "date-time" },
+          firstSeen: { type: "string", format: "date-time" },
+          lastSeen: { type: "string", format: "date-time" },
+          occurrenceCount: { type: "integer", example: 27 },
+          durationMs: { type: "integer", example: 1980000 }
         }
       }
     }
@@ -165,7 +182,24 @@ const openApiDocument = {
         security: [{ apiKeyAuth: [] }],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { $ref: "#/components/schemas/LogInput" } } }
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/LogInput" },
+              examples: {
+                errorWithContext: {
+                  value: {
+                    level: "ERROR",
+                    message: "Database connection failed",
+                    source: "database",
+                    environment: "production",
+                    version: "1.4.3",
+                    errorCode: "DB_CONNECTION_FAILED",
+                    metadata: { host: "db-1", pool: "main" }
+                  }
+                }
+              }
+            }
+          }
         },
         responses: {
           "201": { description: "Log almacenado" },
@@ -213,7 +247,24 @@ const openApiDocument = {
           { name: "page", in: "query", schema: { type: "integer", default: 1 } },
           { name: "pageSize", in: "query", schema: { type: "integer", default: 20 } }
         ],
-        responses: { "200": { description: "Incidentes paginados" } }
+        responses: {
+          "200": {
+            description: "Incidentes paginados con primera/ultima ocurrencia y cantidad de eventos agrupados",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    items: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/IncidentOutput" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/incidents/{id}": {
@@ -222,7 +273,16 @@ const openApiDocument = {
         summary: "Obtener incidente propio",
         security: [{ bearerAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
-        responses: { "200": { description: "Incidente" } }
+        responses: {
+          "200": {
+            description: "Incidente con firstSeen, lastSeen y occurrenceCount",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/IncidentOutput" }
+              }
+            }
+          }
+        }
       }
     },
     "/incidents/{id}/resolve": {

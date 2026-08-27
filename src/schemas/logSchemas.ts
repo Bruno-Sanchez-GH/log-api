@@ -10,6 +10,7 @@ export const ingestLogSchema = z.object({
     message: z.string().trim().min(1).max(2000),
     source: z.string().trim().max(120).optional(),
     environment: environmentSchema.optional(),
+    version: z.string().trim().max(120).optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
     errorCode: z.string().trim().max(120).optional()
   })

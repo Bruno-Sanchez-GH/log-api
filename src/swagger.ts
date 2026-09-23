@@ -1,10 +1,7 @@
 import type { Express } from "express";
 import swaggerUi from "swagger-ui-express";
 
-const serverUrl =
-  process.env.NODE_ENV === "production"
-    ? "https://log-api-nchy.onrender.com/api/v1"
-    : "http://localhost:3000/api/v1";
+const serverUrl = "/api/v1";
 
 const openApiDocument = {
   openapi: "3.0.0",

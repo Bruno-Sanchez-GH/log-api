@@ -3,6 +3,29 @@ import swaggerUi from "swagger-ui-express";
 
 const serverUrl = "/api/v1";
 
+const swaggerAssets = {
+  "swagger-ui.css": {
+    filePath: require.resolve("swagger-ui-dist/swagger-ui.css"),
+    contentType: "text/css"
+  },
+  "swagger-ui-bundle.js": {
+    filePath: require.resolve("swagger-ui-dist/swagger-ui-bundle.js"),
+    contentType: "application/javascript"
+  },
+  "swagger-ui-standalone-preset.js": {
+    filePath: require.resolve("swagger-ui-dist/swagger-ui-standalone-preset.js"),
+    contentType: "application/javascript"
+  },
+  "favicon-16x16.png": {
+    filePath: require.resolve("swagger-ui-dist/favicon-16x16.png"),
+    contentType: "image/png"
+  },
+  "favicon-32x32.png": {
+    filePath: require.resolve("swagger-ui-dist/favicon-32x32.png"),
+    contentType: "image/png"
+  }
+} as const;
+
 const openApiDocument = {
   openapi: "3.0.0",
   info: {
@@ -304,5 +327,21 @@ const openApiDocument = {
 };
 
 export const setupSwagger = (app: Express) => {
-  app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
+  const [swaggerInit] = swaggerUi.serveFiles(openApiDocument);
+
+  app.get("/docs/:asset", (req, res, next) => {
+    const asset = swaggerAssets[req.params.asset as keyof typeof swaggerAssets];
+
+    if (!asset) {
+      next();
+      return;
+    }
+
+    res.type(asset.contentType);
+    res.sendFile(asset.filePath, (error) => {
+      if (error) next(error);
+    });
+  });
+
+  app.use("/docs", swaggerInit, swaggerUi.setup(openApiDocument));
 };

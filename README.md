@@ -1,6 +1,10 @@
 # Freelance Log API
 
-API REST local para centralizar logs e incidentes de varios proyectos en un solo lugar.
+API REST con TypeScript, Node.js, Express y PostgreSQL para centralizar logs e incidentes de varios proyectos.
+
+**Demo pública:** [Swagger / OpenAPI](https://log-api-lilac.vercel.app/docs/).
+
+**Qué demuestra este proyecto:** autenticación JWT, API keys revocables almacenadas como hash, aislamiento de datos por propietario, validación con Zod, agrupación de errores, filtros, paginación y pruebas con Vitest + Supertest. Las instrucciones de abajo permiten ejecutarlo localmente.
 
 ## Problematica
 
@@ -165,12 +169,11 @@ Si el fingerprint coincide y la ultima ocurrencia del incidente fue hace 2 horas
 
 ## Roadmap
 
-Futuras versiones, no implementadas en esta V1:
+Mejoras futuras, no implementadas en la versión actual:
 
 - Priorizacion automatica de incidentes.
 - Impact score.
 - SDK para Node.js.
 - Integracion simplificada mediante middleware.
 - Posible analisis asistido por IA.
-- Deploy.
 - Dashboard opcional.
